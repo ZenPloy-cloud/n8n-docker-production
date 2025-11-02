@@ -2,22 +2,26 @@
 
 Production-ready Docker Compose configurations for n8n with PostgreSQL, optimized for different hardware specifications. Each configuration includes strict resource limits to prevent system instability and ensure predictable performance.
 
+**✨ Updated for n8n 1.117.3** with Task Runners support for secure Code node execution.
+
 ## 🎯 Philosophy
 
-These configurations are built on three core principles:
+These configurations are built on four core principles:
 
 1. **Strict Resource Limits**: CPU and RAM are explicitly divided between services to prevent resource starvation
 2. **Controlled Concurrency**: Hard limits on parallel workflow executions prevent CPU overload
 3. **Efficiency Over Quantity**: Fewer workers with higher concurrency outperform many workers with low concurrency
+4. **Secure Code Execution**: Task runners provide isolated, secure execution for JavaScript and Python code
 
 ## 📊 Available Configurations
 
-### 1 vCPU / 4 GB RAM - Main Mode
+### 1 vCPU / 4 GB RAM - Single Instance Mode
 **Path**: [`1vcpu-4gb-main-mode/`](./1vcpu-4gb-main-mode)
 
-- **Architecture**: Single n8n instance (main mode)
+- **Architecture**: Single n8n instance with internal task runners
 - **Best for**: Small deployments, development, testing
 - **Concurrency**: 5 parallel workflows
+- **Task Runners**: Internal mode (no extra container)
 - **Resource allocation**:
   - PostgreSQL: 0.5 vCPU + 1.5 GB RAM
   - n8n: 0.5 vCPU + 1.5 GB RAM
@@ -26,54 +30,61 @@ These configurations are built on three core principles:
 ### 2 vCPU / 8 GB RAM
 **Path**: [`2vcpu-8gb/`](./2vcpu-8gb)
 
-#### Main Mode ([`main-mode/`](./2vcpu-8gb/main-mode))
-- **Architecture**: Single n8n instance
+#### Single Instance Mode ([`main-mode/`](./2vcpu-8gb/main-mode))
+- **Architecture**: Single n8n instance with internal task runners
 - **Best for**: Moderate workloads, simpler setup
 - **Concurrency**: 10 parallel workflows
+- **Task Runners**: Internal mode (no extra container)
 - **Resource allocation**:
   - PostgreSQL: 1 vCPU + 3.5 GB RAM
   - n8n: 1 vCPU + 4 GB RAM
   - Total: 2 vCPU + 7.5 GB RAM (0.5 GB free for OS)
 
 #### Queue Mode ([`queue-mode/`](./2vcpu-8gb/queue-mode))
-- **Architecture**: 1 main + 1 worker + Redis
+- **Architecture**: 1 main + 1 worker + Redis + task-runners
 - **Best for**: Better separation of concerns, webhook reliability
-- **Concurrency**: 10 per worker
+- **Concurrency**: 8 per worker
+- **Task Runners**: External mode (sidecar container)
 - **Resource allocation**:
   - PostgreSQL: 1 vCPU + 3.5 GB RAM
   - Redis: 0.2 vCPU + 512 MB RAM
   - n8n-main: 0.5 vCPU + 1.5 GB RAM
   - n8n-worker: 1 vCPU + 2.5 GB RAM
-  - Total: 2.7 vCPU + 8 GB RAM
+  - task-runners: 0.3 vCPU + 512 MB RAM
+  - Total: 3 vCPU + 8.5 GB RAM
 
 ### 4 vCPU / 16 GB RAM
 **Path**: [`4vcpu-16gb/`](./4vcpu-16gb)
 
-#### Main Mode ([`main-mode/`](./4vcpu-16gb/main-mode))
-- **Architecture**: Single n8n instance
+#### Single Instance Mode ([`main-mode/`](./4vcpu-16gb/main-mode))
+- **Architecture**: Single n8n instance with internal task runners
 - **Best for**: High workloads without queue complexity
 - **Concurrency**: 20 parallel workflows
+- **Task Runners**: Internal mode (no extra container)
 - **Resource allocation**:
   - PostgreSQL: 2 vCPU + 7 GB RAM
   - n8n: 2 vCPU + 9 GB RAM
   - Total: 4 vCPU + 16 GB RAM
 
 #### Queue Mode - 2 Workers ([`queue-mode/2-workers/`](./4vcpu-16gb/queue-mode/2-workers)) ⭐ **RECOMMENDED**
-- **Architecture**: 1 main + 2 workers + Redis
+- **Architecture**: 1 main + 2 workers + Redis + task-runners
 - **Best for**: Maximum performance and stability
-- **Concurrency**: 15 per worker (30 total)
+- **Concurrency**: 12 per worker (24 total)
+- **Task Runners**: External mode (sidecar container)
 - **Resource allocation**:
   - PostgreSQL: 1.5 vCPU + 6 GB RAM
   - Redis: 0.3 vCPU + 1 GB RAM
   - n8n-main: 0.7 vCPU + 2 GB RAM
   - n8n-worker-1: 0.75 vCPU + 3.5 GB RAM
   - n8n-worker-2: 0.75 vCPU + 3.5 GB RAM
-  - Total: 4 vCPU + 16 GB RAM
+  - task-runners: 0.3 vCPU + 512 MB RAM
+  - Total: 4.55 vCPU + 16.5 GB RAM
 
-#### Queue Mode - 3 Workers ([`queue-mode/3-workers/`](./4vcpu-16gb/queue-mode/3-workers)) ⚠️ **MAXIMUM LIMIT**
-- **Architecture**: 1 main + 3 workers + Redis
-- **Best for**: Only if 2-workers are constantly at 100% CPU
-- **Concurrency**: 12 per worker (36 total)
+#### Queue Mode - 3 Workers ([`queue-mode/3-workers/`](./4vcpu-16gb/queue-mode/3-workers)) ⚠️ **NOT RECOMMENDED**
+- **Architecture**: 1 main + 3 workers + Redis + task-runners
+- **Best for**: Only if 2-workers are constantly at 100% CPU (rare)
+- **Concurrency**: 10 per worker (30 total)
+- **Task Runners**: External mode (sidecar container)
 - **Resource allocation**:
   - PostgreSQL: 1.3 vCPU + 5.5 GB RAM
   - Redis: 0.3 vCPU + 1 GB RAM
@@ -81,7 +92,8 @@ These configurations are built on three core principles:
   - n8n-worker-1: 0.6 vCPU + 2.5 GB RAM
   - n8n-worker-2: 0.6 vCPU + 2.5 GB RAM
   - n8n-worker-3: 0.6 vCPU + 2.5 GB RAM
-  - Total: 4 vCPU + 16 GB RAM
+  - task-runners: 0.3 vCPU + 512 MB RAM
+  - Total: 4.7 vCPU + 16.3 GB RAM
 
 ## 🚀 Quick Start
 
@@ -113,6 +125,9 @@ POSTGRES_PASSWORD=your_generated_password_here
 POSTGRES_USER=n8n
 POSTGRES_DB=n8n
 GENERIC_TIMEZONE=Europe/Paris
+
+# For queue mode only (external task runners)
+N8N_RUNNERS_AUTH_TOKEN=your_generated_token_here
 ```
 
 ### 3. Deploy
@@ -129,6 +144,48 @@ docker-compose ps
 
 # Check logs
 docker-compose logs -f n8n
+```
+
+## 🔒 Task Runners (New in n8n 1.117+)
+
+### What are Task Runners?
+
+Task runners provide secure, isolated execution for JavaScript and Python code in the Code node. They prevent malicious or buggy code from affecting your n8n instance.
+
+### Internal vs External Mode
+
+#### Internal Mode (Single Instance Deployments)
+- **Used in**: All single instance (main mode) configurations
+- **How it works**: n8n launches task runners as child processes
+- **Pros**: Simple, no extra containers, lower overhead
+- **Cons**: Shares resources with n8n process
+- **Best for**: 1-2 vCPU systems, development, testing
+
+#### External Mode (Queue Mode Deployments)
+- **Used in**: All queue mode configurations
+- **How it works**: Separate `task-runners` container (sidecar)
+- **Pros**: Better isolation, independent scaling, more secure
+- **Cons**: Extra container overhead
+- **Best for**: Production queue mode deployments
+
+### Configuration
+
+Task runners are pre-configured in all docker-compose files. For queue mode, you need to set:
+
+```env
+N8N_RUNNERS_AUTH_TOKEN=your_secure_token_here
+```
+
+Generate with: `openssl rand -base64 32`
+
+### Monitoring Task Runners
+
+Check if task runners are active:
+```bash
+# Check n8n logs for task runner registration
+docker-compose logs n8n | grep -i "runner"
+
+# You should see: "Registered runner 'JS Task Runner'"
 ```
 
 ## 📈 Performance Tuning
@@ -221,10 +278,13 @@ Monitor CPU and memory usage of each container.
 ## 🔐 Security Best Practices
 
 1. **Never commit `.env` files** - Use `.env.example` instead
-2. **Backup your encryption key** - Store it securely offline
+2. **Backup your encryption key** - Store it securely offline (you cannot recover credentials without it!)
 3. **Use strong passwords** - Generate with `openssl rand -base64 64`
-4. **Enable HTTPS** - Use a reverse proxy (Nginx/Traefik)
-5. **Regular backups** - Backup PostgreSQL and n8n volumes
+4. **Secure task runners** - Generate unique `N8N_RUNNERS_AUTH_TOKEN` for queue mode
+5. **Enable HTTPS** - Use a reverse proxy (Nginx/Traefik/Dokploy)
+6. **Regular backups** - Backup PostgreSQL and n8n volumes
+7. **Environment variable access** - Set `N8N_BLOCK_ENV_ACCESS_IN_NODE=true` if you don't need env vars in Code nodes
+8. **Git node security** - `N8N_GIT_NODE_DISABLE_BARE_REPOS=true` is enabled by default
 
 ## 📦 Backup & Restore
 
@@ -261,6 +321,20 @@ docker run --rm -v n8n_data:/data -v $(pwd):/backup alpine tar xzf /backup/n8n-d
 2. Redis is accessible from all workers
 3. PostgreSQL is accessible from all workers
 
+### Task runners not starting (Queue Mode)
+
+**Check**:
+1. `N8N_RUNNERS_AUTH_TOKEN` is set and identical in n8n-main and task-runners
+2. Task runners can reach n8n-main on port 5679
+3. Check logs: `docker-compose logs task-runners`
+
+### Code node execution fails
+
+**Check**:
+1. Task runners are registered (check n8n logs for "Registered runner")
+2. For external mode: task-runners container is running
+3. Check task runner logs for errors
+
 ### High memory usage
 
 **Solution**: Reduce concurrency or add more RAM. Check for memory-heavy workflow nodes.
@@ -272,12 +346,19 @@ docker run --rm -v n8n_data:/data -v $(pwd):/backup alpine tar xzf /backup/n8n-d
 2. Number of database connections (should be < 50)
 3. Redis queue depth (should be < 50)
 
+### Deprecation warnings on startup
+
+**Solution**: These configurations are updated for n8n 1.117.3. Old variables like `EXECUTIONS_PROCESS=main` and `EXECUTIONS_MODE=queue` have been removed.
+
 ## 📚 Additional Resources
 
 - [n8n Official Documentation](https://docs.n8n.io/)
+- [n8n Task Runners Documentation](https://docs.n8n.io/hosting/configuration/task-runners/)
 - [n8n Queue Mode Guide](https://docs.n8n.io/hosting/scaling/queue-mode/)
+- [n8n Environment Variables](https://docs.n8n.io/hosting/configuration/environment-variables/)
 - [PostgreSQL Connection Pooling](https://www.postgresql.org/docs/current/runtime-config-connection.html)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Dokploy Documentation](https://dokploy.com/docs) (if using Dokploy)
 
 ## 🤝 Contributing
 
@@ -291,6 +372,22 @@ Contributions are welcome! Please:
 
 MIT License - Feel free to use and modify for your needs.
 
+## 🆕 Changelog
+
+### Version 2.0 (November 2024)
+- ✅ Updated for n8n 1.117.3
+- ✅ Added Task Runners support (internal and external modes)
+- ✅ Removed deprecated environment variables (`EXECUTIONS_PROCESS`, `EXECUTIONS_MODE`)
+- ✅ Added security variables (`N8N_BLOCK_ENV_ACCESS_IN_NODE`, `N8N_GIT_NODE_DISABLE_BARE_REPOS`)
+- ✅ Optimized worker concurrency for better stability
+- ✅ Added task-runners sidecar containers for queue mode
+- ✅ Updated documentation with task runners information
+
+### Version 1.0 (Initial Release)
+- Initial production-ready configurations
+- Resource limits for 1, 2, and 4 vCPU systems
+- Main and queue mode variants
+
 ## ⭐ Acknowledgments
 
 These configurations are based on:
@@ -298,6 +395,13 @@ These configurations are based on:
 - n8n community best practices
 - Performance optimization research
 - Database scaling principles
+- n8n 1.117.3 official documentation
+
+## 🙏 Special Thanks
+
+- n8n team for the excellent workflow automation platform
+- Community members who shared their production experiences
+- Contributors who helped test and improve these configurations
 
 ---
 
@@ -306,3 +410,4 @@ These configurations are based on:
 - Current configuration
 - Observed behavior
 - Expected behavior
+- n8n version

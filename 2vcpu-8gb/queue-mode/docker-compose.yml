@@ -9,11 +9,12 @@
 #      - n8n-main: Handles only the UI, API, and webhooks, ensuring a responsive interface.
 #      - n8n-worker: A dedicated container that does the heavy lifting of executing workflows.
 #      - Redis: A lightweight message broker that manages the queue between main and worker.
+#      - task-runners: External sidecar container for secure Code node execution.
 # 2. DEDICATED RESOURCES: Resources are strategically allocated. The database and the
 #    worker get the largest shares of CPU and RAM, as they are the most critical
 #    components for performance.
-# 3. HIGH CONCURRENCY: The single worker is configured with high concurrency to process
-#    many workflows in parallel, maximizing the efficiency of database connections.
+# 3. CONTROLLED CONCURRENCY: The worker is configured with moderate concurrency to process
+#    workflows efficiently while maintaining stability on dual-core systems.
 #
 
 services:
@@ -83,23 +84,48 @@ services:
     environment:
       # --- Execution Mode ---
       # 'queue' mode offloads all executions to dedicated workers.
-      - EXECUTIONS_MODE=queue
+      - EXECUTIONS_PROCESS=queue
 
       # --- Database & Redis Connection ---
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_BULL_REDIS_HOST=redis             # Tells n8n where to find the Redis queue.
 
-      # --- Security, Host, and other settings (same as main mode) ---
+      # --- Security & Encryption ---
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      - NODE_ENV=production
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_SECURE_COOKIE=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+
+      # --- Host, Network & Timezone Settings ---
       - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
       - WEBHOOK_URL=https://${N8N_HOST}/
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
-      # ... (add other variables like PROXY, PRUNE, etc. as needed)
+
+      # --- Reverse Proxy Configuration ---
+      - N8N_TRUST_PROXY=true
+      - N8N_PROXY_HOPS=1
+
+      # --- Data Pruning & Features ---
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - N8N_PERSONALIZATION_ENABLED=false
+      - N8N_TEMPLATES_ENABLED=true
+
+      # --- Task Runners (External Mode) ---
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
+      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
+
     volumes:
       - n8n_data:/home/node/.n8n
     # --- RESOURCE ALLOCATION ---
@@ -118,18 +144,19 @@ services:
     image: n8nio/n8n:1.117.3
     restart: unless-stopped
     # This command starts the container in 'worker' mode.
-    # --concurrency=10 tells this single worker to handle up to 10 jobs in parallel.
-    # This is the key to high throughput, as it reuses database connections efficiently.
-    command: worker --concurrency=10
+    # --concurrency=8 tells this single worker to handle up to 8 jobs in parallel.
+    # Reduced from 10 for better stability on 2 vCPU systems.
+    command: worker --concurrency=8
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
     environment:
       # --- Execution Mode ---
-      - EXECUTIONS_MODE=queue
+      - EXECUTIONS_PROCESS=queue
       # --- Database & Redis Connection (same as main) ---
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
@@ -148,6 +175,28 @@ services:
         limits:
           cpus: "1.0"  # Dedicate one full CPU core to workflow executions.
           memory: 2.5G   # Allocate 2.5 GB for workflows. Adjust if you have memory-heavy nodes.
+
+  # ---------------------------------------------------------------
+  # Task Runners (External Mode - Sidecar)
+  # ---------------------------------------------------------------
+  task-runners:
+    # The runners image version MUST exactly match the n8n version.
+    image: n8nio/runners:1.117.3
+    restart: unless-stopped
+    depends_on:
+      - n8n-main
+    environment:
+      # --- Task Runner Configuration ---
+      - N8N_RUNNERS_TASK_BROKER_URI=http://n8n-main:5679
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
+      - N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT=15
+    # --- RESOURCE ALLOCATION ---
+    # Task runners are lightweight and need minimal resources.
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 512M
 
 # Named volumes are essential for persisting all your data.
 volumes:

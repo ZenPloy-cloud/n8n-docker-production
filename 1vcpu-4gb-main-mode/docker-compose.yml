@@ -4,14 +4,16 @@
 # ------------------------------------------------------------------------------------
 #
 # PHILOSOPHY:
-# 1. MAIN MODE: On a 1 vCPU server, running n8n in 'queue' mode is inefficient due to
-#    the overhead of extra containers (worker, Redis). This file uses 'main' mode,
-#    where a single n8n container handles everything for maximum resource efficiency.
+# 1. SINGLE INSTANCE MODE: On a 1 vCPU server, running n8n in 'queue' mode is inefficient
+#    due to the overhead of extra containers (worker, Redis). This file uses a single
+#    n8n container that handles everything for maximum resource efficiency.
 # 2. STRICT RESOURCE LIMITS: CPU and RAM are explicitly divided between n8n and
 #    PostgreSQL. This is a critical stability feature to prevent one service from
 #    starving the other under load, which is the primary cause of crashes on small servers.
 # 3. CONTROLLED CONCURRENCY: A hard limit on parallel workflow executions is set to
 #    prevent the single CPU core from becoming overloaded and unstable.
+# 4. TASK RUNNERS (INTERNAL): Task runners are enabled in internal mode for secure
+#    Code node execution without the overhead of additional containers.
 
 
 services:
@@ -72,13 +74,19 @@ services:
       - "${N8N_PORT:-5678}:5678"
     environment:
       # --- Execution & Performance Settings ---
-      # Explicitly set to 'main' for resource efficiency on this server.
-      - EXECUTIONS_PROCESS=main
+      # EXECUTIONS_PROCESS is deprecated and removed (no longer needed in recent versions)
       # CRITICAL PERFORMANCE SETTING: Prevents the single CPU from being overloaded.
       # Limits n8n to 5 parallel workflow executions. If multiple webhooks arrive
       # at once, the 6th one will wait, ensuring the server remains stable.
       # If your system is stable, you can cautiously try increasing this to 8.
       - N8N_CONCURRENCY_PRODUCTION_LIMIT=5
+      
+      # --- Task Runners (Internal Mode) ---
+      # Enables task runners for secure Code node execution (JavaScript/Python).
+      # Internal mode is optimal for 1 vCPU servers (no extra container overhead).
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=internal
+      - N8N_RUNNERS_MAX_CONCURRENCY=3
 
       # --- Database Connection Configuration ---
       - DB_TYPE=postgresdb
@@ -94,6 +102,9 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_SECURE_COOKIE=true                  # Recommended when using HTTPS.
+      # Explicitly set security defaults to avoid future breaking changes.
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false      # Set to true if you don't need env vars in Code node.
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true    # Disables bare repos for security.
 
       # --- Host, Network & Timezone Settings ---
       - N8N_HOST=${N8N_HOST}

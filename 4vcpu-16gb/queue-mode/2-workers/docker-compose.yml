@@ -11,8 +11,10 @@
 #      - Redis: Lightweight message broker managing the queue
 # 2. DEDICATED RESOURCES: Resources are strategically allocated across all services
 #    to maximize performance and stability.
-# 3. HIGH CONCURRENCY: Each worker runs with high concurrency (15) to process
-#    many workflows in parallel, maximizing database connection efficiency.
+# 3. OPTIMIZED CONCURRENCY: Each worker runs with concurrency 12 (total 24) to process
+#    many workflows in parallel while maintaining stability on 4 vCPU systems.
+# 4. TASK RUNNERS (EXTERNAL): External task runners in a sidecar container provide
+#    secure Code node execution with proper isolation.
 #
 
 services:
@@ -83,7 +85,7 @@ services:
         condition: service_healthy
     environment:
       # --- Execution Mode ---
-      - EXECUTIONS_MODE=queue                   # Enables queue mode for distributed execution.
+      - EXECUTIONS_PROCESS=queue                # Enables queue mode for distributed execution.
 
       # --- Database Connection Configuration ---
       - DB_TYPE=postgresdb
@@ -122,9 +124,14 @@ services:
       - EXECUTIONS_DATA_MAX_AGE=168             # Prunes execution data older than 7 days.
       - N8N_PERSONALIZATION_ENABLED=false
       - N8N_TEMPLATES_ENABLED=true
-      - N8N_RUNNERS_ENABLED=true
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+
+      # --- Task Runners (External Mode) ---
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
+      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
     volumes:
       - n8n_data:/home/node/.n8n
     # --- RESOURCE ALLOCATION ---
@@ -141,16 +148,16 @@ services:
   n8n-worker-1:
     image: n8nio/n8n:1.117.3
     restart: unless-stopped
-    # CRITICAL OPTIMIZATION: High concurrency (15) forces efficient reuse of
-    # database connections (connection pooling) and maximizes throughput.
-    command: worker --concurrency=15
+    # CRITICAL OPTIMIZATION: Concurrency (12) provides excellent throughput
+    # while maintaining stability on 4 vCPU systems. Total: 2 workers × 12 = 24 parallel executions.
+    command: worker --concurrency=12
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      - EXECUTIONS_MODE=queue
+      - EXECUTIONS_PROCESS=queue
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
@@ -165,7 +172,8 @@ services:
       # IMPORTANT: The encryption key must be identical across all n8n services.
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
-      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
     volumes:
       - n8n_data:/home/node/.n8n
     # --- RESOURCE ALLOCATION ---
@@ -182,15 +190,15 @@ services:
   n8n-worker-2:
     image: n8nio/n8n:1.117.3
     restart: unless-stopped
-    # CRITICAL OPTIMIZATION: The second worker also runs at high concurrency.
-    command: worker --concurrency=15
+    # CRITICAL OPTIMIZATION: The second worker runs at the same concurrency.
+    command: worker --concurrency=12
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
-      - EXECUTIONS_MODE=queue
+      - EXECUTIONS_PROCESS=queue
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
@@ -204,7 +212,8 @@ services:
       - N8N_GRACEFUL_SHUTDOWN_TIMEOUT=30
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
-      - N8N_RUNNERS_ENABLED=true
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
     volumes:
       - n8n_data:/home/node/.n8n
     # --- RESOURCE ALLOCATION ---
@@ -214,6 +223,28 @@ services:
         limits:
           cpus: "0.75"  # 0.75 CPU cores for workflow executions.
           memory: 3.5G  # 3.5 GB for workflows and their data.
+
+  # --------------------------------
+  # Task Runners (External Mode - Sidecar)
+  # --------------------------------
+  task-runners:
+    # The runners image version MUST exactly match the n8n version.
+    image: n8nio/runners:1.117.3
+    restart: unless-stopped
+    depends_on:
+      - n8n-main
+    environment:
+      # --- Task Runner Configuration ---
+      - N8N_RUNNERS_TASK_BROKER_URI=http://n8n-main:5679
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
+      - N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT=15
+    # --- RESOURCE ALLOCATION ---
+    # Task runners are lightweight and need minimal resources.
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 512M
 
 # Named volumes ensure that your data persists even if containers are removed.
 volumes:
