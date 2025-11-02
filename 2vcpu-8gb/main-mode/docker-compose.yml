@@ -53,7 +53,7 @@ services:
       resources:
         limits:
           cpus: "1.0"   # Guarantees PostgreSQL can use up to 1 full CPU core.
-          memory: 4G  # Guarantees 4 GB of RAM for the database.
+          memory: 4G    # Guarantees 4 GB of RAM for the database.
 
   # ---------------------------------------------------------------
   # N8N Single Instance (Main Mode)
@@ -129,7 +129,7 @@ services:
       - n8n_data:/home/node/.n8n
     # --- CRITICAL STABILITY SETTING ---
     # Allocates the other half of the server's resources to the n8n application.
-    # Total allocated memory is 7.5GB, leaving 0.5GB free for the OS and disk cache.
+    # Total allocated memory is 8GB, using all available RAM.
     deploy:
       resources:
         limits:

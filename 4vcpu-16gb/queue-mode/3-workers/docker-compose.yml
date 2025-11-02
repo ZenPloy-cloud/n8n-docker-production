@@ -45,8 +45,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.3"   # 1.3 CPU cores for database operations.
-          memory: 5.5G  # 5.5 GB of RAM for caching and performance.
+          cpus: "1.4"   # 1.4 CPU cores for database operations.
+          memory: 6.5G  # 6.5 GB of RAM for caching and performance.
 
   # --------------------------------
   # Redis Message Broker Service
@@ -66,8 +66,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.3"   # 30% of a CPU core.
-          memory: 1G    # 1 GB for the job queue.
+          cpus: "0.2"   # 20% of a CPU core.
+          memory: 512M  # 512 MB for the job queue.
 
   # --------------------------------
   # Main n8n Instance (UI, Webhooks, API)
@@ -125,8 +125,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.6"   # 0.6 CPU cores for UI and API.
-          memory: 1.8G  # 1.8 GB for smooth user experience.
+          cpus: "0.4"   # 0.4 CPU cores for UI and API.
+          memory: 1.5G  # 1.5 GB for smooth user experience.
 
   # --------------------------------
   # Worker Instance #1
@@ -266,7 +266,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.3"
+          cpus: "0.2"
           memory: 512M
 
 volumes:

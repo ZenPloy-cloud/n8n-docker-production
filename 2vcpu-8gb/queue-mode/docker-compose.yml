@@ -44,8 +44,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0" # Guarantees up to 1 full CPU core for database operations.
-          memory: 3.5G  # Allocates 3.5 GB of RAM for caching and performance.
+          cpus: "0.7" # Guarantees 0.7 CPU cores for database operations.
+          memory: 3G  # Allocates 3 GB of RAM for caching and performance.
 
   # ---------------------------------------------------------------
   # Redis Message Broker Service
@@ -133,7 +133,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"  # Half a core is sufficient for managing the UI and API.
+          cpus: "0.4"  # 0.4 CPU cores for managing the UI and API.
           memory: 1.5G # 1.5 GB provides a smooth and responsive user experience.
 
   # ---------------------------------------------------------------
@@ -173,8 +173,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"  # Dedicate one full CPU core to workflow executions.
-          memory: 2.5G   # Allocate 2.5 GB for workflows. Adjust if you have memory-heavy nodes.
+          cpus: "0.5"  # 0.5 CPU cores for workflow executions.
+          memory: 2.5G # Allocate 2.5 GB for workflows. Adjust if you have memory-heavy nodes.
 
   # ---------------------------------------------------------------
   # Task Runners (External Mode - Sidecar)
@@ -195,7 +195,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.3"
+          cpus: "0.2"
           memory: 512M
 
 # Named volumes are essential for persisting all your data.

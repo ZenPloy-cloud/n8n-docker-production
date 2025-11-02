@@ -54,7 +54,7 @@ services:
       resources:
         limits:
           cpus: "0.5"   # Guarantees PostgreSQL can use up to 50% of the CPU core.
-          memory: 1.5G    # Guarantees 1.5 GB of RAM for the database.
+          memory: 2G    # Guarantees 2 GB of RAM for the database.
 
   # ---------------------------------------------------------------
   # N8N Single Instance (Main Mode)
@@ -130,12 +130,12 @@ services:
       - n8n_data:/home/node/.n8n
     # --- CRITICAL STABILITY SETTING ---
     # Allocates the other half of the server's resources to the n8n application.
-    # Total allocated memory is 3GB, leaving 1GB free for the OS and disk cache.
+    # Total allocated memory is 4GB, using all available RAM.
     deploy:
       resources:
         limits:
           cpus: "0.5"   # Guarantees the other 50% of the CPU core for n8n.
-          memory: 1.5G    # Guarantees 1.5 GB of RAM for n8n.
+          memory: 2G    # Guarantees 2 GB of RAM for n8n.
 
 # Named volumes are managed by Docker and are the recommended way to persist data.
 # They exist independently of the container lifecycle.

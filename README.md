@@ -23,9 +23,9 @@ These configurations are built on four core principles:
 - **Concurrency**: 5 parallel workflows
 - **Task Runners**: Internal mode (no extra container)
 - **Resource allocation**:
-  - PostgreSQL: 0.5 vCPU + 1.5 GB RAM
-  - n8n: 0.5 vCPU + 1.5 GB RAM
-  - Total: 1 vCPU + 3 GB RAM (1 GB free for OS)
+  - PostgreSQL: 0.5 vCPU + 2 GB RAM
+  - n8n: 0.5 vCPU + 2 GB RAM
+  - Total: 1 vCPU + 4 GB RAM (full utilization)
 
 ### 2 vCPU / 8 GB RAM
 **Path**: [`2vcpu-8gb/`](./2vcpu-8gb)
@@ -36,9 +36,9 @@ These configurations are built on four core principles:
 - **Concurrency**: 10 parallel workflows
 - **Task Runners**: Internal mode (no extra container)
 - **Resource allocation**:
-  - PostgreSQL: 1 vCPU + 3.5 GB RAM
+  - PostgreSQL: 1 vCPU + 4 GB RAM
   - n8n: 1 vCPU + 4 GB RAM
-  - Total: 2 vCPU + 7.5 GB RAM (0.5 GB free for OS)
+  - Total: 2 vCPU + 8 GB RAM (full utilization)
 
 #### Queue Mode ([`queue-mode/`](./2vcpu-8gb/queue-mode))
 - **Architecture**: 1 main + 1 worker + Redis + task-runners
@@ -46,12 +46,12 @@ These configurations are built on four core principles:
 - **Concurrency**: 8 per worker
 - **Task Runners**: External mode (sidecar container)
 - **Resource allocation**:
-  - PostgreSQL: 1 vCPU + 3.5 GB RAM
+  - PostgreSQL: 0.7 vCPU + 3 GB RAM
   - Redis: 0.2 vCPU + 512 MB RAM
-  - n8n-main: 0.5 vCPU + 1.5 GB RAM
-  - n8n-worker: 1 vCPU + 2.5 GB RAM
-  - task-runners: 0.3 vCPU + 512 MB RAM
-  - Total: 3 vCPU + 8.5 GB RAM
+  - n8n-main: 0.4 vCPU + 1.5 GB RAM
+  - n8n-worker: 0.5 vCPU + 2.5 GB RAM
+  - task-runners: 0.2 vCPU + 512 MB RAM
+  - Total: 2 vCPU + 8 GB RAM (full utilization)
 
 ### 4 vCPU / 16 GB RAM
 **Path**: [`4vcpu-16gb/`](./4vcpu-16gb)
@@ -72,13 +72,13 @@ These configurations are built on four core principles:
 - **Concurrency**: 12 per worker (24 total)
 - **Task Runners**: External mode (sidecar container)
 - **Resource allocation**:
-  - PostgreSQL: 1.5 vCPU + 6 GB RAM
-  - Redis: 0.3 vCPU + 1 GB RAM
-  - n8n-main: 0.7 vCPU + 2 GB RAM
-  - n8n-worker-1: 0.75 vCPU + 3.5 GB RAM
-  - n8n-worker-2: 0.75 vCPU + 3.5 GB RAM
-  - task-runners: 0.3 vCPU + 512 MB RAM
-  - Total: 4.55 vCPU + 16.5 GB RAM
+  - PostgreSQL: 1.5 vCPU + 6.5 GB RAM
+  - Redis: 0.2 vCPU + 512 MB RAM
+  - n8n-main: 0.5 vCPU + 2 GB RAM
+  - n8n-worker-1: 0.8 vCPU + 3.5 GB RAM
+  - n8n-worker-2: 0.8 vCPU + 3.5 GB RAM
+  - task-runners: 0.2 vCPU + 512 MB RAM
+  - Total: 4 vCPU + 16 GB RAM (full utilization)
 
 #### Queue Mode - 3 Workers ([`queue-mode/3-workers/`](./4vcpu-16gb/queue-mode/3-workers)) ⚠️ **NOT RECOMMENDED**
 - **Architecture**: 1 main + 3 workers + Redis + task-runners
@@ -86,14 +86,14 @@ These configurations are built on four core principles:
 - **Concurrency**: 10 per worker (30 total)
 - **Task Runners**: External mode (sidecar container)
 - **Resource allocation**:
-  - PostgreSQL: 1.3 vCPU + 5.5 GB RAM
-  - Redis: 0.3 vCPU + 1 GB RAM
-  - n8n-main: 0.6 vCPU + 1.8 GB RAM
+  - PostgreSQL: 1.4 vCPU + 6.5 GB RAM
+  - Redis: 0.2 vCPU + 512 MB RAM
+  - n8n-main: 0.4 vCPU + 1.5 GB RAM
   - n8n-worker-1: 0.6 vCPU + 2.5 GB RAM
   - n8n-worker-2: 0.6 vCPU + 2.5 GB RAM
   - n8n-worker-3: 0.6 vCPU + 2.5 GB RAM
-  - task-runners: 0.3 vCPU + 512 MB RAM
-  - Total: 4.7 vCPU + 16.3 GB RAM
+  - task-runners: 0.2 vCPU + 512 MB RAM
+  - Total: 4 vCPU + 16 GB RAM (full utilization)
 
 ## 🚀 Quick Start
 
