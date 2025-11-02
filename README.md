@@ -13,7 +13,7 @@ These configurations are built on three core principles:
 ## 📊 Available Configurations
 
 ### 1 vCPU / 4 GB RAM - Main Mode
-**Path**: `1vcpu-4gb-main-mode/`
+**Path**: [`1vcpu-4gb-main-mode/`](./1vcpu-4gb-main-mode)
 
 - **Architecture**: Single n8n instance (main mode)
 - **Best for**: Small deployments, development, testing
@@ -24,9 +24,9 @@ These configurations are built on three core principles:
   - Total: 1 vCPU + 3 GB RAM (1 GB free for OS)
 
 ### 2 vCPU / 8 GB RAM
-**Path**: `2vcpu-8gb/`
+**Path**: [`2vcpu-8gb/`](./2vcpu-8gb)
 
-#### Main Mode (`main-mode/`)
+#### Main Mode ([`main-mode/`](./2vcpu-8gb/main-mode))
 - **Architecture**: Single n8n instance
 - **Best for**: Moderate workloads, simpler setup
 - **Concurrency**: 10 parallel workflows
@@ -35,7 +35,7 @@ These configurations are built on three core principles:
   - n8n: 1 vCPU + 4 GB RAM
   - Total: 2 vCPU + 7.5 GB RAM (0.5 GB free for OS)
 
-#### Queue Mode (`queue-mode/`)
+#### Queue Mode ([`queue-mode/`](./2vcpu-8gb/queue-mode))
 - **Architecture**: 1 main + 1 worker + Redis
 - **Best for**: Better separation of concerns, webhook reliability
 - **Concurrency**: 10 per worker
@@ -47,9 +47,9 @@ These configurations are built on three core principles:
   - Total: 2.7 vCPU + 8 GB RAM
 
 ### 4 vCPU / 16 GB RAM
-**Path**: `4vcpu-16gb/`
+**Path**: [`4vcpu-16gb/`](./4vcpu-16gb)
 
-#### Main Mode (`main-mode/`)
+#### Main Mode ([`main-mode/`](./4vcpu-16gb/main-mode))
 - **Architecture**: Single n8n instance
 - **Best for**: High workloads without queue complexity
 - **Concurrency**: 20 parallel workflows
@@ -58,7 +58,7 @@ These configurations are built on three core principles:
   - n8n: 2 vCPU + 9 GB RAM
   - Total: 4 vCPU + 16 GB RAM
 
-#### Queue Mode - 2 Workers (`queue-mode/2-workers/`) ⭐ **RECOMMENDED**
+#### Queue Mode - 2 Workers ([`queue-mode/2-workers/`](./4vcpu-16gb/queue-mode/2-workers)) ⭐ **RECOMMENDED**
 - **Architecture**: 1 main + 2 workers + Redis
 - **Best for**: Maximum performance and stability
 - **Concurrency**: 15 per worker (30 total)
@@ -70,7 +70,7 @@ These configurations are built on three core principles:
   - n8n-worker-2: 0.75 vCPU + 3.5 GB RAM
   - Total: 4 vCPU + 16 GB RAM
 
-#### Queue Mode - 3 Workers (`queue-mode/3-workers/`) ⚠️ **MAXIMUM LIMIT**
+#### Queue Mode - 3 Workers ([`queue-mode/3-workers/`](./4vcpu-16gb/queue-mode/3-workers)) ⚠️ **MAXIMUM LIMIT**
 - **Architecture**: 1 main + 3 workers + Redis
 - **Best for**: Only if 2-workers are constantly at 100% CPU
 - **Concurrency**: 12 per worker (36 total)
@@ -90,7 +90,7 @@ These configurations are built on three core principles:
 Select the configuration that matches your hardware:
 
 ```bash
-cd n8n-postgres-with-resource-limits/2vcpu-8gb/queue-mode/
+cd 2vcpu-8gb/queue-mode/
 ```
 
 ### 2. Configure Environment Variables
